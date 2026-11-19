@@ -20,18 +20,17 @@ class ParkingGarage:
     LED_PIN = 18
 
     def __init__(self):
-        # See User Stories #1, #3-5
-        GPIO.setmode(GPIO.BOARD) # Set the numbering schema to bord mode
-        GPIO.setwarnings(False)
-        self.rtc = None # Variable not initialize yet (see User Story #3)
-        self.servo = None # Variable not initialize yet (see User Story #4)
-        self.door_open = None # Variable not initialize yet (see User Story #4)
-        self.red_light_on = None # Variable not initialize yet (see User Story #5)
-
+        # Mantieni le eventuali righe già presenti nel costruttore originale
+        GPIO.setup(self.INFRARED_PIN1, GPIO.IN)
+        GPIO.setup(self.INFRARED_PIN2, GPIO.IN)
+        GPIO.setup(self.INFRARED_PIN3, GPIO.IN)
 
     def check_occupancy(self, pin: int) -> bool:
-        # See User Story #1
-        pass
+        valid_pins = (self.INFRARED_PIN1, self.INFRARED_PIN2, self.INFRARED_PIN3)
+        if pin not in valid_pins:
+            raise ParkingGarageError(f"Invalid infrared sensor pin: {pin}")
+
+        return not bool(GPIO.input(pin))
 
     def get_number_occupied_spots(self) -> int:
         # See User Story #2
