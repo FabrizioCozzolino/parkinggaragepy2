@@ -152,3 +152,36 @@ class TestParkingGarage(unittest.TestCase):
 
         self.mock_output.assert_called_once_with(ParkingGarage.LED_PIN, False)
         self.assertFalse(garage.red_light_on)
+
+    # --- USER STORY 6 ---
+    def test_manage_red_light_when_garage_full(self):
+        # Tutti e 3 i sensori rilevano un'auto (False) -> garage pieno -> luce rossa accesa
+        self.mock_input.side_effect = [False, False, False]
+        garage = ParkingGarage()
+
+        garage.manage_red_light()
+
+        self.mock_output.assert_called_once_with(ParkingGarage.LED_PIN, True)
+        self.assertTrue(garage.red_light_on)
+
+    def test_manage_red_light_when_garage_not_full(self):
+        # 2 posti occupati (False, False) e 1 libero (True) -> garage non pieno -> luce rossa spenta
+        self.mock_input.side_effect = [False, False, True]
+        garage = ParkingGarage()
+        garage.turn_on_red_light()
+        self.mock_output.reset_mock()
+
+        garage.manage_red_light()
+
+        self.mock_output.assert_called_once_with(ParkingGarage.LED_PIN, False)
+        self.assertFalse(garage.red_light_on)
+
+    def test_manage_red_light_when_garage_empty(self):
+        # Tutti e 3 i posti liberi (True) -> luce rossa spenta
+        self.mock_input.side_effect = [True, True, True]
+        garage = ParkingGarage()
+
+        garage.manage_red_light()
+
+        self.mock_output.assert_called_once_with(ParkingGarage.LED_PIN, False)
+        self.assertFalse(garage.red_light_on)
