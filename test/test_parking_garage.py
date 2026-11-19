@@ -9,14 +9,17 @@ class TestParkingGarage(unittest.TestCase):
     def setUp(self):
         self.setup_patcher = patch("parking_garage.GPIO.setup")
         self.input_patcher = patch("parking_garage.GPIO.input")
+        self.pwm_patcher = patch("parking_garage.GPIO.PWM")
         self.rtc_patcher = patch("parking_garage.SDL_DS3231.SDL_DS3231")
 
         self.mock_setup = self.setup_patcher.start()
         self.mock_input = self.input_patcher.start()
+        self.mock_pwm_cls = self.pwm_patcher.start()
         self.mock_rtc_cls = self.rtc_patcher.start()
 
         self.addCleanup(self.setup_patcher.stop)
         self.addCleanup(self.input_patcher.stop)
+        self.addCleanup(self.pwm_patcher.stop)
         self.addCleanup(self.rtc_patcher.stop)
 
     # --- USER STORY 1 ---
@@ -95,3 +98,30 @@ class TestParkingGarage(unittest.TestCase):
         entry_time = datetime(2026, 11, 16, 12, 0)
         with self.assertRaises(ParkingGarageError):
             garage.calculate_parking_fee(entry_time)
+
+    # --- USER STORY 4 ---
+    def test_servo_initialized_on_init(self):
+        garage = ParkingGarage()
+
+        self.mock_setup.assert_any_call(ParkingGarage.SERVO_PIN, GPIO.OUT)
+        self.mock_pwm_cls.assert_called_once_with(ParkingGarage.SERVO_PIN, 50)
+        self.assertEqual(garage.servo, self.mock_pwm_cls.return_value)
+        garage.servo.start.assert_called_once_with(5)
+        self.assertFalse(garage.door_open)
+
+    def test_open_garage_door(self):
+        garage = ParkingGarage()
+        garage.open_garage_door()
+
+        garage.servo.ChangeDutyCycle.assert_called_once_with(10)
+        self.assertTrue(garage.door_open)
+
+    def test_close_garage_door(self):
+        garage = ParkingGarage()
+        garage.open_garage_door()
+        garage.servo.ChangeDutyCycle.reset_mock()
+
+        garage.close_garage_door()
+
+        garage.servo.ChangeDutyCycle.assert_called_once_with(5)
+        self.assertFalse(garage.door_open)
