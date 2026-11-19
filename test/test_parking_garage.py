@@ -45,3 +45,30 @@ class TestParkingGarage(unittest.TestCase):
 
         with self.assertRaises(ParkingGarageError):
             garage.check_occupancy(99)
+
+    @patch("parking_garage.GPIO.setup")
+    @patch("parking_garage.GPIO.input")
+    def test_get_number_occupied_spots_none(self, mock_input, mock_setup):
+        # Tutti i sensori restituiscono True -> 0 posti occupati
+        mock_input.side_effect = [True, True, True]
+        garage = ParkingGarage()
+
+        self.assertEqual(garage.get_number_occupied_spots(), 0)
+
+    @patch("parking_garage.GPIO.setup")
+    @patch("parking_garage.GPIO.input")
+    def test_get_number_occupied_spots_two(self, mock_input, mock_setup):
+        # Spot 1 occupato (False), Spot 2 libero (True), Spot 3 occupato (False) -> 2 posti occupati
+        mock_input.side_effect = [False, True, False]
+        garage = ParkingGarage()
+
+        self.assertEqual(garage.get_number_occupied_spots(), 2)
+
+    @patch("parking_garage.GPIO.setup")
+    @patch("parking_garage.GPIO.input")
+    def test_get_number_occupied_spots_all(self, mock_input, mock_setup):
+        # Tutti i sensori restituiscono False -> 3 posti occupati
+        mock_input.side_effect = [False, False, False]
+        garage = ParkingGarage()
+
+        self.assertEqual(garage.get_number_occupied_spots(), 3)
