@@ -10,6 +10,9 @@ try:
 except:
     import mock.SDL_DS3231 as SDL_DS3231
 
+import math
+from datetime import datetime
+
 class ParkingGarage:
 
     # Pin number declarations
@@ -20,10 +23,13 @@ class ParkingGarage:
     LED_PIN = 18
 
     def __init__(self):
-        # Mantieni le eventuali righe già presenti nel costruttore originale
+        # Configurazione pin sensori infrarossi (US #1)
         GPIO.setup(self.INFRARED_PIN1, GPIO.IN)
         GPIO.setup(self.INFRARED_PIN2, GPIO.IN)
         GPIO.setup(self.INFRARED_PIN3, GPIO.IN)
+
+        # Inizializzazione modulo RTC (US #3)
+        self.rtc = SDL_DS3231.SDL_DS3231()
 
     def check_occupancy(self, pin: int) -> bool:
         valid_pins = (self.INFRARED_PIN1, self.INFRARED_PIN2, self.INFRARED_PIN3)
@@ -37,8 +43,21 @@ class ParkingGarage:
         return sum(1 for pin in pins if self.check_occupancy(pin))
 
     def calculate_parking_fee(self, entry_time: datetime) -> float:
-        # See User Story #3
-        pass
+        exit_time = self.rtc.read_datetime()
+
+        if exit_time < entry_time:
+            raise ParkingGarageError("Exit time cannot be earlier than entry time.")
+
+        duration_seconds = (exit_time - entry_time).total_seconds()
+        hours = math.ceil(duration_seconds / 3600)
+
+        fee = hours * 2.50
+
+        # Sabato (5) o Domenica (6): maggiorazione del 25%
+        if exit_time.weekday() in (5, 6):
+            fee *= 1.25
+
+        return fee
 
     def open_garage_door(self) -> None:
         # See User Story #4
