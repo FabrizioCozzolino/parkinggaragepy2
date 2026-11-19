@@ -28,16 +28,20 @@ class ParkingGarage:
         GPIO.setup(self.INFRARED_PIN2, GPIO.IN)
         GPIO.setup(self.INFRARED_PIN3, GPIO.IN)
 
-        # Configurazione pin servo motore (US #4)
+        # Configurazione pin servo motore (US #4) e LED rosso (US #5)
         GPIO.setup(self.SERVO_PIN, GPIO.OUT)
+        GPIO.setup(self.LED_PIN, GPIO.OUT)
 
         # Inizializzazione modulo RTC (US #3)
         self.rtc = SDL_DS3231.SDL_DS3231()
 
-        # Inizializzazione servo motore PWM a 50 Hz e posizione chiusa (duty cycle 5%) (US #4)
+        # Inizializzazione servo motore (US #4)
         self.servo = GPIO.PWM(self.SERVO_PIN, 50)
         self.servo.start(5)
         self.door_open = False
+
+        # Inizializzazione stato LED rosso (US #5)
+        self.red_light_on = False
 
     def check_occupancy(self, pin: int) -> bool:
         valid_pins = (self.INFRARED_PIN1, self.INFRARED_PIN2, self.INFRARED_PIN3)
@@ -76,12 +80,12 @@ class ParkingGarage:
         self.door_open = False
 
     def turn_on_red_light(self) -> None:
-        # See User Story #5
-        pass
+        GPIO.output(self.LED_PIN, True)
+        self.red_light_on = True
 
     def turn_off_red_light(self) -> None:
-        # See User Story #5
-        pass
+        GPIO.output(self.LED_PIN, False)
+        self.red_light_on = False
 
     def manage_red_light(self) -> None:
         # See User Story #6
